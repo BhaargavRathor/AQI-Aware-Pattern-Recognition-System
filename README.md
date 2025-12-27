@@ -15,7 +15,8 @@ over time.
 
 ## Project Structure
 hackathon_files/
-│
+
+
 ├── agent_definition.md # Agent goals, scope, and constraints
 ├── agent_reasoning.md # Agent reasoning loop and logic
 ├── pseudocode.md # Step-by-step agent pseudocode
