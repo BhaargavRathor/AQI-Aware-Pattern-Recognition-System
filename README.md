@@ -24,5 +24,14 @@ hackathon_files/
 ├── sample_data.csv # Example dataset
 ├── synthetic_city_3000_rows.csv
 
+HOW TO USE THE PROJECT
+
+---
+
+## How to Run the Project (Demo)
+
+1. Clone the repository:
+
+
 
 
