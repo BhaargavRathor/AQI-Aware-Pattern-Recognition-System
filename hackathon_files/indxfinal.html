@@ -1,0 +1,2324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symptom Detective Agent | AI-Powered Environmental Intelligence</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
+    <style>
+        /* ===== CSS RESET & VARIABLES ===== */
+        :root {
+            --primary-dark: #0A0F1C;
+            --secondary-dark: #131827;
+            --card-dark: #1A1F32;
+            --surface-dark: #22273C;
+            --accent-blue: #3A86FF;
+            --accent-teal: #4ECDC4;
+            --accent-amber: #FF9E00;
+            --accent-red: #FF6B6B;
+            --accent-purple: #9D4EDD;
+            --accent-cyan: #00D4FF;
+            --accent-green: #06D6A0;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B8C1D9;
+            --text-muted: #6B7280;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(58, 134, 255, 0.4);
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.2);
+            --shadow-heavy: 0 16px 48px rgba(0, 0, 0, 0.3);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --radius-2xl: 24px;
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-medium: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--primary-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(58, 134, 255, 0.08) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(157, 78, 221, 0.08) 0%, transparent 20%),
+                radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 30%);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        /* ===== LAYOUT ===== */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 32px;
+            padding: 140px 0 60px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 15, 28, 0.95);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 24px 0;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            animation: float 6s ease-in-out infinite;
+            box-shadow: 0 8px 32px rgba(58, 134, 255, 0.4);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-main {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-tagline {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== DATA UPLOAD CARD ===== */
+        .data-upload-card {
+            background: var(--card-dark);
+            border-radius: var(--radius-2xl);
+            padding: 32px;
+            border: 1px solid var(--border-color);
+            position: sticky;
+            top: 120px;
+            animation: fadeInLeft 0.8s ease-out;
+            transition: all var(--transition-medium);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .data-upload-card:hover {
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-heavy);
+            transform: translateY(-4px);
+        }
+
+        .upload-section {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 48px 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-medium);
+            background: rgba(58, 134, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .upload-section:hover {
+            border-color: var(--accent-blue);
+            background: rgba(58, 134, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(58, 134, 255, 0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+
+        .file-info {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-top: 24px;
+            border-left: 4px solid var(--accent-teal);
+            animation: slideIn 0.4s ease-out;
+        }
+
+        /* ===== FILTERS ===== */
+        .filters-section {
+            margin-top: 32px;
+        }
+
+        .filter-group {
+            margin-bottom: 24px;
+        }
+
+        .filter-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            background-size: 16px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.15);
+        }
+
+        .filter-select option {
+            background: var(--card-dark);
+            color: var(--text-primary);
+            padding: 12px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 16px 32px;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: var(--transition-medium);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+            box-shadow: 0 4px 20px rgba(58, 134, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(58, 134, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* ===== METRICS ===== */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background: var(--card-dark);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-medium);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .metric-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            opacity: 0;
+            transition: opacity var(--transition-medium);
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .metric-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .metric-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border-color);
+            transition: all var(--transition-medium);
+        }
+
+        .metric-card:hover .metric-icon {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border-color: transparent;
+            color: white;
+            transform: rotate(10deg) scale(1.1);
+        }
+
+        .metric-value {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 4px 12px rgba(58, 134, 255, 0.2);
+            animation: countUp 1s ease-out;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 16px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            display: inline-flex;
+        }
+
+        .trend-up {
+            color: var(--accent-green);
+            background: rgba(6, 214, 160, 0.1);
+        }
+
+        .trend-down {
+            color: var(--accent-red);
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        /* ===== CHARTS ===== */
+        .charts-section {
+            margin-bottom: 40px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+        }
+
+        .chart-card {
+            background: var(--card-dark);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            border: 1px solid var(--border-color);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .chart-card:nth-child(1) { animation-delay: 0.2s; }
+        .chart-card:nth-child(2) { animation-delay: 0.3s; }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chart-title i {
+            color: var(--accent-cyan);
+            font-size: 20px;
+        }
+
+        .chart-container {
+            height: 380px;
+            position: relative;
+        }
+
+        /* ===== INSIGHTS ===== */
+        .insights-section {
+            margin-bottom: 40px;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+        }
+
+        .insight-card {
+            background: var(--card-dark);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInRight 0.7s ease-out;
+        }
+
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: var(--accent-blue);
+            border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+        }
+
+        .insight-card.warning::before { background: var(--accent-amber); }
+        .insight-card.critical::before { background: var(--accent-red); }
+        .insight-card.success::before { background: var(--accent-green); }
+        .insight-card.info::before { background: var(--accent-cyan); }
+
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .insight-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .insight-card.warning .insight-icon { background: rgba(255, 158, 0, 0.1); color: var(--accent-amber); }
+        .insight-card.critical .insight-icon { background: rgba(255, 107, 107, 0.1); color: var(--accent-red); }
+        .insight-card.success .insight-icon { background: rgba(6, 214, 160, 0.1); color: var(--accent-green); }
+        .insight-card.info .insight-icon { background: rgba(0, 212, 255, 0.1); color: var(--accent-cyan); }
+
+        .insight-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .insight-content {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* ===== DATA TABLE ===== */
+        .data-table-section {
+            margin-bottom: 60px;
+        }
+
+        .data-table-container {
+            background: var(--card-dark);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out;
+            position: relative;
+        }
+
+        .data-table-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            padding: 24px 32px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .data-table td {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 15px;
+            transition: all var(--transition-fast);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+            transform: translateX(4px);
+        }
+
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-good {
+            background: rgba(6, 214, 160, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(6, 214, 160, 0.3);
+        }
+
+        .status-moderate {
+            background: rgba(255, 158, 0, 0.15);
+            color: var(--accent-amber);
+            border: 1px solid rgba(255, 158, 0, 0.3);
+        }
+
+        .status-unhealthy {
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .status-hazardous {
+            background: rgba(157, 78, 221, 0.15);
+            color: var(--accent-purple);
+            border: 1px solid rgba(157, 78, 221, 0.3);
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border-color);
+            background: var(--secondary-dark);
+            margin-top: 40px;
+            animation: fadeInUp 1.2s ease-out;
+        }
+
+        .footer-content {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .footer-content p {
+            margin-bottom: 12px;
+        }
+
+        .disclaimer {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(58, 134, 255, 0.1));
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-top: 32px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .disclaimer strong {
+            color: var(--accent-red);
+            display: block;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 1400px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            .data-upload-card {
+                position: static;
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 24px;
+            }
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            .metric-value {
+                font-size: 36px;
+            }
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        /* ===== LOADING STATES ===== */
+        .loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, transparent 30%, rgba(58, 134, 255, 0.2) 50%, transparent 70%);
+            animation: shimmer 2s infinite;
+            border-radius: inherit;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--secondary-dark);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-blue);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-brain-circuit"></i>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-main">Symptom Detective Agent</div>
+                    <div class="logo-tagline">AI-Powered Environmental Intelligence System</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="export-btn">
+                <i class="fas fa-file-export"></i> Export Report
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="container dashboard">
+        <!-- Sidebar -->
+        <aside>
+            <div class="data-upload-card">
+                <h2 style="font-size: 24px; margin-bottom: 32px; color: var(--text-primary);">Data Source</h2>
+                
+                <div class="upload-section" id="upload-area">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 18px;">
+                        Upload Air Quality Dataset
+                    </div>
+                    <div class="upload-text">
+                        Drop your CSV file here or click to browse
+                    </div>
+                    <div class="upload-text" style="font-size: 14px; margin-top: 8px;">
+                        Required columns: timestamp, city, aqi, pm25, temperature, humidity
+                    </div>
+                    <input type="file" id="csv-file" accept=".csv" style="display: none;">
+                </div>
+                
+                <div class="file-info" id="file-info" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; font-size: 16px;" id="file-name"></div>
+                            <div style="font-size: 14px; color: var(--text-muted); margin-top: 6px;" id="file-details"></div>
+                        </div>
+                        <button id="remove-file" class="btn btn-secondary" style="padding: 10px 16px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="filters-section">
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-map-marker-alt"></i> City Filter
+                        </label>
+                        <select class="filter-select" id="city-select">
+                            <option value="all">All Cities</option>
+                            <option value="Delhi">Delhi</option>
+                            <option value="Mumbai">Mumbai</option>
+                            <option value="Bangalore">Bangalore</option>
+                            <option value="Chennai">Chennai</option>
+                            <option value="Hyderabad">Hyderabad</option>
+                            <option value="Kolkata">Kolkata</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-calendar-alt"></i> Date Range
+                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <input type="date" class="filter-select" id="start-date" value="2024-01-01">
+                            <input type="date" class="filter-select" id="end-date" value="2024-01-31">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-full" id="analyze-btn" style="margin-top: 24px;">
+                        <i class="fas fa-chart-network"></i> Analyze Data
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="dashboard-content">
+            <!-- Metrics -->
+            <section style="margin-bottom: 40px;">
+                <h2 style="font-size: 32px; margin-bottom: 16px; color: var(--text-primary);">Environmental Intelligence Dashboard</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 40px; max-width: 800px; font-size: 16px; line-height: 1.7;">
+                    Advanced pattern recognition system analyzing correlations between air quality metrics and environmental patterns.
+                    This non-diagnostic tool provides insights for awareness purposes only.
+                </p>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div>
+                                <div class="metric-value" id="avg-aqi">0</div>
+                                <div class="metric-label">Average AQI</div>
+                            </div>
+                        </div>
+                        <div class="trend-indicator trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>Upload dataset to begin</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <div class="metric-value" id="high-risk">0</div>
+                                <div class="metric-label">High Risk Hours</div>
+                            </div>
+                        </div>
+                        <div class="trend-indicator trend-down">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>Data analysis pending</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <div class="metric-value" id="peak-aqi">0</div>
+                                <div class="metric-label">Peak Pollution</div>
+                            </div>
+                        </div>
+                        <div class="trend-indicator trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>Pattern detection ready</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <div class="metric-value" id="correlation">0%</div>
+                                <div class="metric-label">Pattern Correlation</div>
+                            </div>
+                        </div>
+                        <div class="trend-indicator trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>24-72h window analysis</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts -->
+            <section class="charts-section">
+                <div class="chart-header" style="margin-bottom: 32px;">
+                    <h2 style="font-size: 24px; color: var(--text-primary);">Environmental Pattern Analysis</h2>
+                    <select class="filter-select" style="width: auto; min-width: 180px;" id="chart-period">
+                        <option value="7">Last 7 Days</option>
+                        <option value="30" selected>Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                    </select>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-line"></i> AQI Time Series
+                            </div>
+                        </div>
+                        <div class="chart-container" id="aqi-chart">
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted);">
+                                <div style="text-align: center;">
+                                    <i class="fas fa-chart-line" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                                    <div>Upload dataset to visualize AQI trends</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-pie"></i> Risk Distribution
+                            </div>
+                        </div>
+                        <div class="chart-container" id="risk-chart">
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted);">
+                                <div style="text-align: center;">
+                                    <i class="fas fa-chart-pie" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                                    <div>Upload dataset to see risk analysis</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Insights -->
+            <section class="insights-section">
+                <h2 style="font-size: 24px; margin-bottom: 32px; color: var(--text-primary);">AI Agent Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card info">
+                        <div class="insight-header">
+                            <div class="insight-icon">
+                                <i class="fas fa-chart-network"></i>
+                            </div>
+                            <div class="insight-title">Pattern Recognition</div>
+                        </div>
+                        <div class="insight-content" id="insight-pattern">
+                            Upload a CSV dataset containing air quality measurements to enable pattern recognition. The system will analyze hourly fluctuations, peak periods, and temporal correlations.
+                        </div>
+                    </div>
+
+                    <div class="insight-card warning">
+                        <div class="insight-header">
+                            <div class="insight-icon">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div class="insight-title">Temporal Correlation</div>
+                        </div>
+                        <div class="insight-content" id="insight-temporal">
+                            Once data is uploaded, the system will examine 24-72 hour windows between air quality spikes and potential pattern shifts. This analysis focuses on environmental correlations only.
+                        </div>
+                    </div>
+
+                    <div class="insight-card success">
+                        <div class="insight-header">
+                            <div class="insight-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="insight-title">Preventive Awareness</div>
+                        </div>
+                        <div class="insight-content" id="insight-preventive">
+                            Based on statistical analysis, the system will provide environmental awareness insights. These are informational observations only—not medical predictions or recommendations.
+                        </div>
+                    </div>
+
+                    <div class="insight-card critical">
+                        <div class="insight-header">
+                            <div class="insight-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="insight-title">Statistical Analysis</div>
+                        </div>
+                        <div class="insight-content" id="insight-stats">
+                            Waiting for dataset upload. Statistical calculations will include mean, median, standard deviation, variance, correlation coefficients, and trend analysis.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Table -->
+            <section class="data-table-section">
+                <div class="chart-header" style="margin-bottom: 32px;">
+                    <h2 style="font-size: 24px; color: var(--text-primary);">Air Quality Data Analysis</h2>
+                    <button class="btn btn-secondary" id="refresh-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="data-table-container">
+                    <table class="data-table" id="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Location</th>
+                                <th>AQI</th>
+                                <th>PM2.5</th>
+                                <th>Temperature</th>
+                                <th>Humidity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 60px 24px;">
+                                    <div style="color: var(--text-muted); font-size: 16px; line-height: 1.6;">
+                                        <i class="fas fa-database" style="font-size: 48px; margin-bottom: 20px; display: block; opacity: 0.5;"></i>
+                                        Upload a CSV file with air quality data to begin analysis<br>
+                                        <span style="font-size: 14px; margin-top: 8px; display: block;">
+                                            Required columns: timestamp, city, aqi, pm25, temperature, humidity
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Environmental Intelligence Platform | Non-Diagnostic Pattern Recognition System</p>
+                <p>Hackathon: Envision @ IIT Hyderabad 2026 | Innov-AI-tion Category</p>
+                <p>Domain: Agentic Systems | AQI-Aware Environmental Intelligence</p>
+                <p>Scope: Preventive Awareness | Explainable AI | Environmental Pattern Analysis</p>
+                
+                <div class="disclaimer">
+                    <strong>IMPORTANT: Non-Diagnostic System</strong>
+                    This platform analyzes environmental patterns only. It does not diagnose diseases, predict medical outcomes, or provide healthcare advice. 
+                    All insights are based on statistical pattern recognition for awareness purposes. Consult healthcare professionals for medical concerns.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ===== ENHANCED CSV PARSER =====
+        class EnhancedCSVParser {
+            constructor() {
+                this.dataset = [];
+                this.filteredData = [];
+                this.DateTime = luxon.DateTime;
+            }
+
+            parseCSV(text) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        console.log('Starting CSV parsing...');
+                        
+                        // Clean text and split lines
+                        const lines = text.trim().split(/\r?\n/).filter(line => line.trim());
+                        console.log(`Found ${lines.length} lines`);
+                        
+                        if (lines.length < 2) {
+                            throw new Error('CSV file is empty or has insufficient data');
+                        }
+
+                        // Detect delimiter
+                        const firstLine = lines[0];
+                        const delimiters = [',', ';', '\t'];
+                        let delimiter = ',';
+                        for (const d of delimiters) {
+                            if (firstLine.split(d).length > 1) {
+                                delimiter = d;
+                                break;
+                            }
+                        }
+                        console.log(`Detected delimiter: "${delimiter}"`);
+
+                        // Parse headers with normalization
+                        const rawHeaders = firstLine.split(delimiter).map(h => h.trim());
+                        const headers = rawHeaders.map(h => {
+                            // Normalize common column names
+                            const lower = h.toLowerCase();
+                            if (lower.includes('timestamp') || lower.includes('date') || lower.includes('time')) return 'timestamp';
+                            if (lower.includes('city') || lower.includes('location') || lower.includes('place')) return 'city';
+                            if (lower.includes('aqi') || lower.includes('air quality')) return 'aqi';
+                            if (lower.includes('pm25') || lower.includes('pm2.5') || lower.includes('pm2')) return 'pm25';
+                            if (lower.includes('temp') || lower.includes('temperature')) return 'temperature';
+                            if (lower.includes('humid') || lower.includes('humidity')) return 'humidity';
+                            return lower;
+                        });
+                        
+                        console.log('Headers:', headers);
+
+                        // Validate required columns
+                        const required = ['timestamp', 'city', 'aqi', 'pm25', 'temperature', 'humidity'];
+                        const missing = required.filter(col => !headers.includes(col));
+                        
+                        if (missing.length > 0) {
+                            throw new Error(`Missing required columns: ${missing.join(', ')}. Found: ${headers.join(', ')}`);
+                        }
+
+                        // Parse data rows
+                        const dataset = [];
+                        let errorCount = 0;
+                        let rowCount = 0;
+                        
+                        for (let i = 1; i < lines.length; i++) {
+                            rowCount++;
+                            try {
+                                const line = lines[i];
+                                let values = line.split(delimiter);
+                                
+                                // Handle quoted values
+                                if (line.includes('"')) {
+                                    const regex = /(".*?"|[^",]+)(?=,|$)/g;
+                                    values = [];
+                                    let match;
+                                    while ((match = regex.exec(line + (line.endsWith(delimiter) ? '' : delimiter))) !== null) {
+                                        values.push(match[1].replace(/"/g, '').trim());
+                                    }
+                                }
+                                
+                                if (values.length < headers.length) {
+                                    console.warn(`Skipping row ${i}: insufficient columns`, values);
+                                    errorCount++;
+                                    continue;
+                                }
+                                
+                                const row = {};
+                                headers.forEach((header, index) => {
+                                    let value = values[index]?.trim() || '';
+                                    
+                                    switch(header) {
+                                        case 'timestamp':
+                                            // Try multiple date formats
+                                            const dateFormats = [
+                                                'yyyy-MM-dd HH:mm:ss',
+                                                'yyyy/MM/dd HH:mm:ss',
+                                                'dd-MM-yyyy HH:mm:ss',
+                                                'dd/MM/yyyy HH:mm:ss',
+                                                'MM/dd/yyyy HH:mm:ss',
+                                                'yyyy-MM-dd',
+                                                'dd-MM-yyyy'
+                                            ];
+                                            
+                                            for (const format of dateFormats) {
+                                                const dt = this.DateTime.fromFormat(value, format);
+                                                if (dt.isValid) {
+                                                    row[header] = dt.toISO();
+                                                    break;
+                                                }
+                                            }
+                                            
+                                            // Fallback to JavaScript Date
+                                            if (!row[header]) {
+                                                const date = new Date(value);
+                                                if (!isNaN(date)) {
+                                                    row[header] = date.toISOString();
+                                                }
+                                            }
+                                            break;
+                                            
+                                        case 'aqi':
+                                        case 'pm25':
+                                        case 'temperature':
+                                        case 'humidity':
+                                            // Remove any non-numeric characters except decimal point
+                                            const cleaned = value.replace(/[^\d.-]/g, '');
+                                            const num = parseFloat(cleaned);
+                                            row[header] = isNaN(num) ? null : num;
+                                            break;
+                                            
+                                        case 'city':
+                                            row[header] = value || 'Unknown';
+                                            break;
+                                            
+                                        default:
+                                            row[header] = value;
+                                    }
+                                });
+                                
+                                // Only add row if it has all required data
+                                if (row.timestamp && row.city && row.aqi !== null && row.pm25 !== null && 
+                                    row.temperature !== null && row.humidity !== null) {
+                                    dataset.push(row);
+                                } else {
+                                    errorCount++;
+                                    console.warn(`Skipping row ${i}: missing required data`, row);
+                                }
+                                
+                            } catch (rowError) {
+                                errorCount++;
+                                console.warn(`Error parsing row ${i}:`, rowError);
+                            }
+                        }
+                        
+                        console.log(`Parsed ${dataset.length} valid rows out of ${rowCount} total`);
+                        console.log(`Skipped ${errorCount} invalid rows`);
+                        
+                        if (dataset.length === 0) {
+                            throw new Error('No valid data rows found in CSV file');
+                        }
+                        
+                        // Sort by timestamp
+                        dataset.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                        
+                        this.dataset = dataset;
+                        this.filteredData = dataset;
+                        
+                        console.log('CSV parsing completed successfully');
+                        resolve(dataset);
+                        
+                    } catch (error) {
+                        console.error('CSV parsing error:', error);
+                        reject(error);
+                    }
+                });
+            }
+
+            filterData(city = 'all', startDate = null, endDate = null) {
+                let filtered = this.dataset;
+                
+                // Filter by city
+                if (city !== 'all') {
+                    filtered = filtered.filter(item => 
+                        item.city.toLowerCase() === city.toLowerCase()
+                    );
+                }
+                
+                // Filter by date range
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    filtered = filtered.filter(item => {
+                        const itemDate = new Date(item.timestamp);
+                        return itemDate >= start && itemDate <= end;
+                    });
+                }
+                
+                this.filteredData = filtered;
+                console.log(`Filtered to ${filtered.length} records`);
+                return filtered;
+            }
+
+            calculateStatistics() {
+                if (this.filteredData.length === 0) {
+                    return {
+                        avgAQI: 0,
+                        maxAQI: 0,
+                        minAQI: 0,
+                        highRiskHours: 0,
+                        correlation: 0,
+                        totalRecords: 0
+                    };
+                }
+
+                const aqiValues = this.filteredData.map(item => item.aqi).filter(val => val !== null);
+                const pm25Values = this.filteredData.map(item => item.pm25).filter(val => val !== null);
+                const tempValues = this.filteredData.map(item => item.temperature).filter(val => val !== null);
+                const humidityValues = this.filteredData.map(item => item.humidity).filter(val => val !== null);
+                
+                // Basic statistics
+                const avgAQI = aqiValues.reduce((a, b) => a + b, 0) / aqiValues.length;
+                const maxAQI = Math.max(...aqiValues);
+                const minAQI = Math.min(...aqiValues);
+                
+                // High risk hours (AQI > 150)
+                const highRiskHours = aqiValues.filter(aqi => aqi > 150).length;
+                
+                // Calculate correlation between PM2.5 and AQI
+                let correlation = 0;
+                if (aqiValues.length > 1 && pm25Values.length > 1) {
+                    const meanAqi = avgAQI;
+                    const meanPm25 = pm25Values.reduce((a, b) => a + b, 0) / pm25Values.length;
+                    
+                    let numerator = 0;
+                    let denomAqi = 0;
+                    let denomPm25 = 0;
+                    
+                    const minLength = Math.min(aqiValues.length, pm25Values.length);
+                    for (let i = 0; i < minLength; i++) {
+                        numerator += (aqiValues[i] - meanAqi) * (pm25Values[i] - meanPm25);
+                        denomAqi += Math.pow(aqiValues[i] - meanAqi, 2);
+                        denomPm25 += Math.pow(pm25Values[i] - meanPm25, 2);
+                    }
+                    
+                    correlation = numerator / Math.sqrt(denomAqi * denomPm25);
+                }
+                
+                return {
+                    avgAQI: Math.round(avgAQI),
+                    maxAQI: Math.round(maxAQI),
+                    minAQI: Math.round(minAQI),
+                    highRiskHours,
+                    correlation: Math.round(Math.abs(correlation) * 100),
+                    totalRecords: this.filteredData.length,
+                    avgPM25: Math.round(pm25Values.reduce((a, b) => a + b, 0) / pm25Values.length),
+                    avgTemp: Math.round(tempValues.reduce((a, b) => a + b, 0) / tempValues.length * 10) / 10,
+                    avgHumidity: Math.round(humidityValues.reduce((a, b) => a + b, 0) / humidityValues.length)
+                };
+            }
+
+            getInsights() {
+                const stats = this.calculateStatistics();
+                const totalRecords = this.filteredData.length;
+                
+                if (totalRecords === 0) {
+                    return {
+                        pattern: "Upload a CSV dataset to begin analysis. The system will identify patterns in air quality fluctuations and environmental correlations.",
+                        temporal: "Once data is loaded, the AI agent will analyze 24-72 hour windows for delayed environmental pattern correlations.",
+                        preventive: "Statistical analysis will provide awareness insights based on observed environmental patterns and trends.",
+                        stats: "Waiting for data upload. The system will calculate mean, standard deviation, variance, and correlation coefficients."
+                    };
+                }
+                
+                // Generate insights based on data
+                let patternInsight = `Analyzed ${totalRecords.toLocaleString()} data points. `;
+                patternInsight += stats.avgAQI <= 50 ? "Overall air quality is good with minimal fluctuations. " :
+                                 stats.avgAQI <= 100 ? "Moderate air quality observed with occasional spikes. " :
+                                 stats.avgAQI <= 150 ? "Elevated pollution levels detected with noticeable variations. " :
+                                 "High pollution levels with significant daily fluctuations. ";
+                patternInsight += `The highest AQI recorded was ${stats.maxAQI}.`;
+                
+                let temporalInsight = `Detected ${stats.highRiskHours} high-risk hours (AQI > 150). `;
+                temporalInsight += stats.highRiskHours > 10 ? "Frequent high-pollution periods suggest potential cumulative environmental effects. " : 
+                                 "High-pollution events are relatively infrequent. ";
+                temporalInsight += `Correlation analysis shows ${stats.correlation}% relationship between PM2.5 and AQI levels.`;
+                
+                let preventiveInsight = "Based on pattern analysis: ";
+                preventiveInsight += stats.avgAQI > 150 ? "Sustained high pollution levels observed. " :
+                                    stats.avgAQI > 100 ? "Periodic elevated pollution detected. " :
+                                    "Generally acceptable air quality levels maintained. ";
+                preventiveInsight += "These are environmental observations only, not medical guidance.";
+                
+                let statsInsight = `Statistical summary: Average AQI: ${stats.avgAQI} (Range: ${stats.minAQI}-${stats.maxAQI}), `;
+                statsInsight += `Average PM2.5: ${stats.avgPM25} µg/m³, `;
+                statsInsight += `Average Temperature: ${stats.avgTemp}°C, `;
+                statsInsight += `Average Humidity: ${stats.avgHumidity}%.`;
+                
+                return {
+                    pattern: patternInsight,
+                    temporal: temporalInsight,
+                    preventive: preventiveInsight,
+                    stats: statsInsight
+                };
+            }
+
+            getChartData(days = 30) {
+                if (this.filteredData.length === 0) {
+                    return null;
+                }
+                
+                // Group data by day for the specified period
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - days);
+                
+                const dailyData = {};
+                const hourlyData = {};
+                
+                this.filteredData.forEach(item => {
+                    const date = new Date(item.timestamp);
+                    if (date >= startDate && date <= endDate) {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const hourStr = date.toISOString().split(':')[0] + ':00';
+                        
+                        // Daily aggregation
+                        if (!dailyData[dateStr]) {
+                            dailyData[dateStr] = {
+                                aqi: [],
+                                pm25: [],
+                                temp: [],
+                                humidity: []
+                            };
+                        }
+                        dailyData[dateStr].aqi.push(item.aqi);
+                        dailyData[dateStr].pm25.push(item.pm25);
+                        dailyData[dateStr].temp.push(item.temperature);
+                        dailyData[dateStr].humidity.push(item.humidity);
+                        
+                        // Hourly data for recent period
+                        if (date >= new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000)) {
+                            if (!hourlyData[hourStr]) {
+                                hourlyData[hourStr] = {
+                                    aqi: [],
+                                    pm25: []
+                                };
+                            }
+                            hourlyData[hourStr].aqi.push(item.aqi);
+                            hourlyData[hourStr].pm25.push(item.pm25);
+                        }
+                    }
+                });
+                
+                // Process daily averages
+                const dates = Object.keys(dailyData).sort();
+                const dailyAverages = dates.map(date => {
+                    const data = dailyData[date];
+                    return {
+                        date,
+                        aqi: Math.round(data.aqi.reduce((a, b) => a + b, 0) / data.aqi.length),
+                        pm25: Math.round(data.pm25.reduce((a, b) => a + b, 0) / data.pm25.length)
+                    };
+                });
+                
+                // Process hourly averages for recent week
+                const hours = Object.keys(hourlyData).sort();
+                const hourlyAverages = hours.map(hour => {
+                    const data = hourlyData[hour];
+                    return {
+                        hour: new Date(hour).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                        aqi: Math.round(data.aqi.reduce((a, b) => a + b, 0) / data.aqi.length),
+                        pm25: Math.round(data.pm25.reduce((a, b) => a + b, 0) / data.pm25.length)
+                    };
+                });
+                
+                // Risk distribution
+                const riskCategories = {
+                    'Good (0-50)': 0,
+                    'Moderate (51-100)': 0,
+                    'Unhealthy (101-150)': 0,
+                    'Hazardous (151+)': 0
+                };
+                
+                this.filteredData.forEach(item => {
+                    if (item.aqi <= 50) riskCategories['Good (0-50)']++;
+                    else if (item.aqi <= 100) riskCategories['Moderate (51-100)']++;
+                    else if (item.aqi <= 150) riskCategories['Unhealthy (101-150)']++;
+                    else riskCategories['Hazardous (151+)']++;
+                });
+                
+                return {
+                    dailyAverages,
+                    hourlyAverages,
+                    riskCategories,
+                    totalPoints: this.filteredData.length
+                };
+            }
+        }
+
+        // ===== DASHBOARD APPLICATION =====
+        class DashboardApp {
+            constructor() {
+                this.parser = new EnhancedCSVParser();
+                this.currentFile = null;
+                this.isAnalyzing = false;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.setupDefaultDates();
+                console.log('Dashboard initialized');
+            }
+
+            setupEventListeners() {
+                // File upload
+                const uploadArea = document.getElementById('upload-area');
+                const fileInput = document.getElementById('csv-file');
+                
+                uploadArea.addEventListener('click', () => fileInput.click());
+                
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files[0]) {
+                        this.handleFileUpload(e.target.files[0]);
+                    }
+                });
+
+                // Drag and drop
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.background = 'rgba(58, 134, 255, 0.15)';
+                    uploadArea.style.borderColor = 'var(--accent-blue)';
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.style.background = 'rgba(58, 134, 255, 0.05)';
+                    uploadArea.style.borderColor = 'var(--border-color)';
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.background = 'rgba(58, 134, 255, 0.05)';
+                    uploadArea.style.borderColor = 'var(--border-color)';
+                    
+                    const file = e.dataTransfer.files[0];
+                    if (file && (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv'))) {
+                        this.handleFileUpload(file);
+                    } else {
+                        this.showNotification('Please upload a CSV file', 'error');
+                    }
+                });
+
+                // Remove file
+                document.getElementById('remove-file').addEventListener('click', () => {
+                    this.removeFile();
+                });
+
+                // Analyze button
+                document.getElementById('analyze-btn').addEventListener('click', () => {
+                    this.analyzeData();
+                });
+
+                // Filter changes
+                document.getElementById('city-select').addEventListener('change', () => {
+                    if (this.parser.dataset.length > 0) {
+                        this.updateDashboard();
+                    }
+                });
+
+                document.getElementById('start-date').addEventListener('change', () => {
+                    if (this.parser.dataset.length > 0) {
+                        this.updateDashboard();
+                    }
+                });
+
+                document.getElementById('end-date').addEventListener('change', () => {
+                    if (this.parser.dataset.length > 0) {
+                        this.updateDashboard();
+                    }
+                });
+
+                document.getElementById('chart-period').addEventListener('change', () => {
+                    if (this.parser.dataset.length > 0) {
+                        this.updateCharts();
+                    }
+                });
+
+                // Export button
+                document.getElementById('export-btn').addEventListener('click', () => {
+                    this.exportReport();
+                });
+
+                // Refresh button
+                document.getElementById('refresh-btn').addEventListener('click', () => {
+                    this.updateDashboard();
+                });
+            }
+
+            setupDefaultDates() {
+                const today = new Date();
+                const lastMonth = new Date(today);
+                lastMonth.setMonth(lastMonth.getMonth() - 1);
+                
+                document.getElementById('start-date').value = lastMonth.toISOString().split('T')[0];
+                document.getElementById('end-date').value = today.toISOString().split('T')[0];
+            }
+
+            async handleFileUpload(file) {
+                if (!file) return;
+                
+                this.currentFile = file;
+                
+                // Show loading state
+                const uploadArea = document.getElementById('upload-area');
+                const originalContent = uploadArea.innerHTML;
+                uploadArea.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                        <div class="spinner"></div>
+                        <div>Processing ${file.name}...</div>
+                    </div>
+                `;
+                uploadArea.classList.add('loading');
+                
+                try {
+                    console.log(`Reading file: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+                    const text = await this.readFileAsText(file);
+                    
+                    await this.parser.parseCSV(text);
+                    
+                    // Update file info display
+                    document.getElementById('file-name').textContent = file.name;
+                    document.getElementById('file-details').textContent = 
+                        `${this.parser.dataset.length.toLocaleString()} records • ${(file.size / 1024).toFixed(1)} KB • Uploaded ${new Date().toLocaleTimeString()}`;
+                    document.getElementById('file-info').style.display = 'block';
+                    
+                    // Update dashboard with new data
+                    this.updateDashboard();
+                    
+                    this.showNotification(`Successfully loaded ${this.parser.dataset.length.toLocaleString()} records`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    this.showNotification(`Error: ${error.message}`, 'error');
+                    this.removeFile();
+                    
+                } finally {
+                    // Restore upload area
+                    uploadArea.innerHTML = originalContent;
+                    uploadArea.classList.remove('loading');
+                }
+            }
+
+            readFileAsText(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(new Error('Failed to read file'));
+                    reader.readAsText(file);
+                });
+            }
+
+            removeFile() {
+                document.getElementById('csv-file').value = '';
+                document.getElementById('file-info').style.display = 'none';
+                this.currentFile = null;
+                this.parser.dataset = [];
+                this.parser.filteredData = [];
+                this.resetDashboard();
+                this.showNotification('File removed. Please upload a new dataset.', 'info');
+            }
+
+            analyzeData() {
+                if (this.parser.dataset.length === 0) {
+                    this.showNotification('Please upload a CSV file first', 'warning');
+                    return;
+                }
+
+                if (this.isAnalyzing) return;
+                this.isAnalyzing = true;
+
+                const analyzeBtn = document.getElementById('analyze-btn');
+                const originalText = analyzeBtn.innerHTML;
+                
+                analyzeBtn.innerHTML = '<div class="spinner"></div> Advanced Analysis...';
+                analyzeBtn.classList.add('loading');
+                
+                // Animate metrics
+                this.animateMetrics();
+                
+                // Simulate advanced analysis
+                setTimeout(() => {
+                    this.updateDashboard();
+                    analyzeBtn.innerHTML = originalText;
+                    analyzeBtn.classList.remove('loading');
+                    this.isAnalyzing = false;
+                    this.showNotification('Advanced analysis complete', 'success');
+                }, 800);
+            }
+
+            updateDashboard() {
+                if (this.parser.dataset.length === 0) {
+                    this.resetDashboard();
+                    return;
+                }
+
+                // Apply filters
+                const city = document.getElementById('city-select').value;
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+                
+                this.parser.filterData(city, startDate, endDate);
+                
+                // Update metrics with animation
+                this.updateMetrics();
+                
+                // Update insights
+                this.updateInsights();
+                
+                // Update data table
+                this.updateDataTable();
+                
+                // Update charts
+                this.updateCharts();
+            }
+
+            updateMetrics() {
+                const stats = this.parser.calculateStatistics();
+                
+                // Animate metric updates
+                this.animateMetric('avg-aqi', stats.avgAQI);
+                this.animateMetric('peak-aqi', stats.maxAQI);
+                this.animateMetric('high-risk', stats.highRiskHours);
+                this.animateMetric('correlation', `${stats.correlation}%`);
+                
+                // Update trend indicators
+                const indicators = document.querySelectorAll('.trend-indicator');
+                
+                indicators[0].innerHTML = `<i class="fas fa-arrow-${stats.avgAQI > 100 ? 'up' : 'down'}"></i>
+                                          <span>${stats.avgAQI > 100 ? 'Above' : 'Below'} moderate threshold</span>`;
+                indicators[0].className = `trend-indicator ${stats.avgAQI > 100 ? 'trend-up' : 'trend-down'}`;
+                
+                indicators[1].innerHTML = `<i class="fas fa-arrow-${stats.highRiskHours > 10 ? 'up' : 'down'}"></i>
+                                          <span>${stats.highRiskHours} high pollution hours</span>`;
+                indicators[1].className = `trend-indicator ${stats.highRiskHours > 10 ? 'trend-up' : 'trend-down'}`;
+                
+                indicators[2].innerHTML = `<i class="fas fa-arrow-${stats.maxAQI > 200 ? 'up' : 'down'}"></i>
+                                          <span>${stats.maxAQI > 200 ? 'Severe' : 'Moderate'} peak pollution</span>`;
+                indicators[2].className = `trend-indicator ${stats.maxAQI > 200 ? 'trend-up' : 'trend-down'}`;
+                
+                indicators[3].innerHTML = `<i class="fas fa-arrow-${stats.correlation > 50 ? 'up' : 'down'}"></i>
+                                          <span>${stats.correlation}% pattern correlation</span>`;
+                indicators[3].className = `trend-indicator ${stats.correlation > 50 ? 'trend-up' : 'trend-down'}`;
+            }
+
+            animateMetric(elementId, finalValue) {
+                const element = document.getElementById(elementId);
+                const currentValue = parseInt(element.textContent) || 0;
+                const finalNum = typeof finalValue === 'string' ? parseInt(finalValue) || 0 : finalValue;
+                
+                if (currentValue === finalNum) return;
+                
+                // Add animation class
+                element.style.animation = 'none';
+                element.offsetHeight; // Trigger reflow
+                element.style.animation = 'countUp 0.8s ease-out';
+                
+                // Update value
+                setTimeout(() => {
+                    element.textContent = finalValue;
+                }, 400);
+            }
+
+            animateMetrics() {
+                const metrics = document.querySelectorAll('.metric-value');
+                metrics.forEach(metric => {
+                    metric.style.animation = 'pulse 0.5s ease-in-out';
+                    setTimeout(() => {
+                        metric.style.animation = '';
+                    }, 500);
+                });
+            }
+
+            updateInsights() {
+                const insights = this.parser.getInsights();
+                
+                // Animate insight updates
+                const insightElements = {
+                    'insight-pattern': insights.pattern,
+                    'insight-temporal': insights.temporal,
+                    'insight-preventive': insights.preventive,
+                    'insight-stats': insights.stats
+                };
+                
+                Object.entries(insightElements).forEach(([id, text], index) => {
+                    const element = document.getElementById(id);
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(10px)';
+                    
+                    setTimeout(() => {
+                        element.textContent = text;
+                        element.style.transition = 'all 0.4s ease';
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }
+
+            updateDataTable() {
+                const tableBody = document.getElementById('data-table-body');
+                
+                if (this.parser.filteredData.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px;">
+                                <div style="color: var(--text-muted);">
+                                    No data available for selected filters
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // Show first 10 records
+                const displayData = this.parser.filteredData.slice(0, 10);
+                tableBody.innerHTML = '';
+                
+                displayData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.style.animationDelay = `${index * 0.05}s`;
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateY(20px)';
+                    row.style.animation = 'fadeInUp 0.4s ease forwards';
+                    
+                    const date = new Date(item.timestamp);
+                    const timeString = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const dateString = date.toLocaleDateString();
+                    
+                    // Determine status
+                    let statusClass, statusText;
+                    if (item.aqi <= 50) {
+                        statusClass = 'status-good';
+                        statusText = 'Good';
+                    } else if (item.aqi <= 100) {
+                        statusClass = 'status-moderate';
+                        statusText = 'Moderate';
+                    } else if (item.aqi <= 150) {
+                        statusClass = 'status-unhealthy';
+                        statusText = 'Unhealthy';
+                    } else {
+                        statusClass = 'status-hazardous';
+                        statusText = 'Hazardous';
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${dateString} ${timeString}</td>
+                        <td><strong>${item.city}</strong></td>
+                        <td>${item.aqi}</td>
+                        <td>${item.pm25.toFixed(1)}</td>
+                        <td>${item.temperature.toFixed(1)}°C</td>
+                        <td>${item.humidity.toFixed(1)}%</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                    
+                    // Trigger animation
+                    setTimeout(() => {
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateY(0)';
+                    }, index * 50);
+                });
+            }
+
+            updateCharts() {
+                if (this.parser.filteredData.length === 0) {
+                    this.resetCharts();
+                    return;
+                }
+
+                const days = parseInt(document.getElementById('chart-period').value) || 30;
+                const chartData = this.parser.getChartData(days);
+                
+                if (!chartData) return;
+
+                // AQI Trend Chart
+                this.createAQIChart(chartData.dailyAverages);
+                
+                // Risk Distribution Chart
+                this.createRiskChart(chartData.riskCategories);
+            }
+
+            createAQIChart(dailyAverages) {
+                if (!dailyAverages || dailyAverages.length === 0) return;
+
+                const dates = dailyAverages.map(d => d.date);
+                const aqiValues = dailyAverages.map(d => d.aqi);
+                const pm25Values = dailyAverages.map(d => d.pm25);
+                
+                // Define color zones for AQI
+                const zoneColors = dates.map(date => {
+                    const aqi = aqiValues[dates.indexOf(date)];
+                    if (aqi <= 50) return '#06D6A0';
+                    if (aqi <= 100) return '#FFD166';
+                    if (aqi <= 150) return '#EF476F';
+                    return '#9D4EDD';
+                });
+                
+                const trace1 = {
+                    x: dates,
+                    y: aqiValues,
+                    mode: 'lines+markers',
+                    name: 'AQI',
+                    line: {
+                        color: 'var(--accent-blue)',
+                        width: 3,
+                        shape: 'spline'
+                    },
+                    marker: {
+                        size: 6,
+                        color: zoneColors
+                    },
+                    fill: 'tozeroy',
+                    fillcolor: 'rgba(58, 134, 255, 0.1)'
+                };
+                
+                const trace2 = {
+                    x: dates,
+                    y: pm25Values,
+                    mode: 'lines',
+                    name: 'PM2.5 (µg/m³)',
+                    line: {
+                        color: 'var(--accent-cyan)',
+                        width: 2,
+                        dash: 'dash'
+                    },
+                    yaxis: 'y2'
+                };
+                
+                const layout = {
+                    plot_bgcolor: 'transparent',
+                    paper_bgcolor: 'transparent',
+                    font: { 
+                        color: 'var(--text-secondary)',
+                        family: 'Inter',
+                        size: 12
+                    },
+                    xaxis: {
+                        gridcolor: 'var(--border-color)',
+                        tickangle: -45,
+                        title: {
+                            text: 'Date',
+                            font: { size: 12 }
+                        },
+                        tickformat: '%b %d'
+                    },
+                    yaxis: {
+                        gridcolor: 'var(--border-color)',
+                        title: {
+                            text: 'AQI Level',
+                            font: { size: 12 }
+                        },
+                        range: [0, Math.max(...aqiValues) * 1.1]
+                    },
+                    yaxis2: {
+                        title: {
+                            text: 'PM2.5 (µg/m³)',
+                            font: { size: 12 }
+                        },
+                        overlaying: 'y',
+                        side: 'right',
+                        gridcolor: 'transparent'
+                    },
+                    height: 340,
+                    margin: { t: 30, r: 60, b: 70, l: 60 },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 1,
+                        bgcolor: 'rgba(0,0,0,0.5)',
+                        bordercolor: 'var(--border-color)',
+                        borderwidth: 1
+                    },
+                    hovermode: 'x unified'
+                };
+                
+                Plotly.react('aqi-chart', [trace1, trace2], layout);
+            }
+
+            createRiskChart(riskCategories) {
+                const labels = Object.keys(riskCategories);
+                const values = Object.values(riskCategories);
+                const colors = ['#06D6A0', '#FFD166', '#EF476F', '#9D4EDD'];
+                
+                const data = [{
+                    values: values,
+                    labels: labels,
+                    type: 'pie',
+                    hole: 0.5,
+                    marker: {
+                        colors: colors
+                    },
+                    textinfo: 'label+percent',
+                    hoverinfo: 'label+value+percent',
+                    textfont: { 
+                        color: 'var(--text-primary)',
+                        family: 'Inter',
+                        size: 11
+                    },
+                    sort: false,
+                    rotation: 45
+                }];
+                
+                const layout = {
+                    plot_bgcolor: 'transparent',
+                    paper_bgcolor: 'transparent',
+                    font: { 
+                        color: 'var(--text-secondary)',
+                        family: 'Inter'
+                    },
+                    height: 340,
+                    margin: { t: 20, r: 20, b: 20, l: 20 },
+                    showlegend: true,
+                    legend: {
+                        font: { 
+                            color: 'var(--text-secondary)',
+                            size: 11
+                        },
+                        orientation: 'h',
+                        y: -0.1,
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    annotations: [{
+                        text: `${values.reduce((a, b) => a + b, 0).toLocaleString()} Data Points`,
+                        showarrow: false,
+                        x: 0.5,
+                        y: 0.5,
+                        font: {
+                            size: 14,
+                            color: 'var(--text-secondary)'
+                        }
+                    }]
+                };
+                
+                Plotly.react('risk-chart', data, layout);
+            }
+
+            resetDashboard() {
+                // Reset metrics
+                document.getElementById('avg-aqi').textContent = '0';
+                document.getElementById('peak-aqi').textContent = '0';
+                document.getElementById('high-risk').textContent = '0';
+                document.getElementById('correlation').textContent = '0%';
+                
+                // Reset insights
+                document.getElementById('insight-pattern').textContent = 'Upload a CSV dataset containing air quality measurements to enable pattern recognition. The system will analyze hourly fluctuations, peak periods, and temporal correlations.';
+                document.getElementById('insight-temporal').textContent = 'Once data is uploaded, the system will examine 24-72 hour windows between air quality spikes and potential pattern shifts. This analysis focuses on environmental correlations only.';
+                document.getElementById('insight-preventive').textContent = 'Based on statistical analysis, the system will provide environmental awareness insights. These are informational observations only—not medical predictions or recommendations.';
+                document.getElementById('insight-stats').textContent = 'Waiting for dataset upload. Statistical calculations will include mean, median, standard deviation, variance, correlation coefficients, and trend analysis.';
+                
+                // Reset table
+                const tableBody = document.getElementById('data-table-body');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 60px 24px;">
+                            <div style="color: var(--text-muted); font-size: 16px; line-height: 1.6;">
+                                <i class="fas fa-database" style="font-size: 48px; margin-bottom: 20px; display: block; opacity: 0.5;"></i>
+                                Upload a CSV file with air quality data to begin analysis<br>
+                                <span style="font-size: 14px; margin-top: 8px; display: block;">
+                                    Required columns: timestamp, city, aqi, pm25, temperature, humidity
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                // Reset charts
+                this.resetCharts();
+            }
+
+            resetCharts() {
+                document.getElementById('aqi-chart').innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted);">
+                        <div style="text-align: center;">
+                            <i class="fas fa-chart-line" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <div>Upload dataset to visualize AQI trends</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('risk-chart').innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted);">
+                        <div style="text-align: center;">
+                            <i class="fas fa-chart-pie" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <div>Upload dataset to see risk analysis</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            exportReport() {
+                if (this.parser.dataset.length === 0) {
+                    this.showNotification('No data to export. Please upload a dataset first.', 'warning');
+                    return;
+                }
+
+                const stats = this.parser.calculateStatistics();
+                const insights = this.parser.getInsights();
+                
+                const report = `
+Symptom Detective Agent - Environmental Intelligence Report
+================================================================
+Generated: ${new Date().toLocaleString()}
+Total Records: ${stats.totalRecords}
+Filters Applied: ${document.getElementById('city-select').value}, 
+                 ${document.getElementById('start-date').value} to ${document.getElementById('end-date').value}
+
+KEY METRICS
+-----------
+Average AQI: ${stats.avgAQI}
+Peak AQI: ${stats.maxAQI}
+Minimum AQI: ${stats.minAQI}
+High Risk Hours (AQI > 150): ${stats.highRiskHours}
+Pattern Correlation: ${stats.correlation}%
+
+AGENT INSIGHTS
+--------------
+Pattern Recognition: ${insights.pattern}
+
+Temporal Correlation: ${insights.temporal}
+
+Preventive Awareness: ${insights.preventive}
+
+Statistical Analysis: ${insights.stats}
+
+DATA SUMMARY
+------------
+Total Data Points: ${stats.totalRecords}
+Time Period: ${document.getElementById('start-date').value} to ${document.getElementById('end-date').value}
+Selected City: ${document.getElementById('city-select').value}
+
+IMPORTANT DISCLAIMER
+--------------------
+This report contains environmental pattern analysis only. It does NOT provide medical
+diagnosis, predictions, or healthcare advice. All insights are for awareness purposes
+based on statistical pattern recognition. Consult healthcare professionals for medical
+concerns.
+                `;
+                
+                const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `environmental_intelligence_report_${new Date().toISOString().split('T')[0]}.txt`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.showNotification('Report exported successfully!', 'success');
+            }
+
+            showNotification(message, type = 'info') {
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 100px;
+                    right: 32px;
+                    background: ${type === 'success' ? 'var(--accent-green)' : 
+                               type === 'error' ? 'var(--accent-red)' : 
+                               type === 'warning' ? 'var(--accent-amber)' : 'var(--accent-blue)'};
+                    color: white;
+                    padding: 16px 24px;
+                    border-radius: var(--radius-lg);
+                    font-weight: 500;
+                    z-index: 10000;
+                    animation: fadeInRight 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+                    box-shadow: var(--shadow-medium);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    min-width: 300px;
+                `;
+                
+                notification.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                   type === 'error' ? 'exclamation-circle' : 
+                                   type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Auto-remove after 3 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 3000);
+            }
+        }
+
+        // Initialize the dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.dashboardApp = new DashboardApp();
+            console.log('Dashboard ready');
+        });
+
+        // Add CSS for fadeOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(100px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
