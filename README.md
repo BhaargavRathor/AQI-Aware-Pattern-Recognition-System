@@ -23,7 +23,9 @@ hackathon_files/
 ├── codereasoning.py # Core agent reasoning implementation
 ├── data_ingestion.py # AQI and environmental data handling
 ├── sample_data.csv # Example dataset
-├── synthetic_city_3000_rows.csv
+├── synthetic_city_3000_rows.csv   #to be uploaded in the website
+|--indx.html  #the webpage
+|--webpagecode.md   #code for the webpage
 
 
 ## How to Run the Project (Demo)
