@@ -43,6 +43,11 @@ python codereasoning.py
 The agent simulates respiratory symptom analysis and explains how AQI trends
 may contribute to symptom flare-ups using delayed temporal reasoning.
 
+#HOW TO USE THE DEMO WEBPAGE
+1.We upload the file synthetic_city_3000_rows.csv file
+It contains the data for Delhi as demo.
+
+
 
 
 ## Key Features
